@@ -64,20 +64,16 @@ void SendAudioMute(void)
     consumerReport[1] = 0xE2;   // Audio Mute LSB
     consumerReport[2] = 0x00;   // Audio Mute MSB
 
-    USBD_HID_SendReport(
-        &hUsbDeviceFS,
-        consumerReport,
-        3);
+    while (((USBD_HID_HandleTypeDef *)hUsbDeviceFS.pClassData)->state == HID_BUSY);
 
-    HAL_Delay(20);
+    USBD_HID_SendReport(&hUsbDeviceFS, consumerReport, 3);
 
     consumerReport[1] = 0x00;
     consumerReport[2] = 0x00;
 
-    USBD_HID_SendReport(
-        &hUsbDeviceFS,
-        consumerReport,
-        3);
+    while (((USBD_HID_HandleTypeDef *)hUsbDeviceFS.pClassData)->state == HID_BUSY);
+
+    USBD_HID_SendReport(&hUsbDeviceFS, consumerReport, 3);
 }
 
 /* USER CODE END 0 */
@@ -125,7 +121,7 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   uint8_t currentKey;
-  uint8_t previousKey = KEY_NONE;
+  uint8_t previousKey = 0x00;
 
   while (1)
   {
@@ -133,57 +129,79 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  if(currentKey != KEY_NONE &&
-	     previousKey == KEY_NONE)
+	  if(currentKey != 0x00 && previousKey == 0x00)
 	  {
-		  buffer[1] = 0;
+		  buffer[1] = 0x00;
 
-		  if(currentKey == KEY_AUDIO_MUTE)
+		  if(currentKey == 0xFD)
 		  {
 		      SendAudioMute();
 
 		      previousKey = currentKey;
 		      continue;
 		  }
-		  if(currentKey == KEY_MIC_MUTE)
+		  if(currentKey == 0x68)
 		  {
 		      buffer[3]= currentKey;
 		  }
-		  if(currentKey == KEY_HASH_INTERNAL)
+		  if(currentKey == 0xF0)
 		  {
-		      buffer[1] = KEY_MOD_LSHIFT;
-		      buffer[3] = KEY_3;
+		      buffer[1] = 0x02;
+		      buffer[3] = 0x20;
 		  }
-		  else if(currentKey == KEY_STAR_INTERNAL)
+		  else if(currentKey == 0xF1)
 		  {
-		      buffer[1] = KEY_MOD_LSHIFT;
-		      buffer[3] = KEY_8;
+		      buffer[1] = 0x02;
+		      buffer[3] = 0x25;
+		  }
+		  else if(currentKey == 0x1e)
+		  {
+		      // First press
+		      buffer[3] = 0x1e;
+		      USBD_HID_SendReport(&hUsbDeviceFS, buffer, 8);
+
+		      HAL_Delay(30);
+
+		      // Release
+		      buffer[3] = 0x00;
+		      USBD_HID_SendReport(&hUsbDeviceFS, buffer, 8);
+
+		      HAL_Delay(30);
+
+		      // Second press
+		      buffer[3] = 0x1e;
+		      USBD_HID_SendReport(&hUsbDeviceFS, buffer, 8);
+
+		      HAL_Delay(30);
+
+		      // Final release
+		      buffer[3] = 0x00;
+		      USBD_HID_SendReport(&hUsbDeviceFS, buffer, 8);
+
+		      previousKey = currentKey;
+		      continue;
 		  }
 		  else
 		  {
 		      buffer[3] = currentKey;
 		  }
 
-		  USBD_HID_SendReport(
-		      &hUsbDeviceFS,
-		      buffer,
-		      8);
+		  USBD_HID_SendReport(&hUsbDeviceFS, buffer, 8);
 
 	      previousKey = currentKey;
 	  }
-	  if(currentKey == KEY_NONE &&
-	     previousKey != KEY_NONE)
+	  if(currentKey == 0x00 && previousKey != 0x00)
 	  {
 		  buffer[1] = 0;
-		  buffer[3] = KEY_NONE;
+		  buffer[3] = 0x00;
 
-		  USBD_HID_SendReport(
-		      &hUsbDeviceFS,
-		      buffer,
-		      8);
+		  while (((USBD_HID_HandleTypeDef *)hUsbDeviceFS.pClassData)->state == HID_BUSY);
 
-	      previousKey = KEY_NONE;
+		  USBD_HID_SendReport(&hUsbDeviceFS, buffer, 8);
+
+	      previousKey = 0x00;
 	  }
+
   }
   /* USER CODE END 3 */
 }

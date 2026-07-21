@@ -59,14 +59,13 @@
 #define USB_HID_DESC_SIZ              9
 
 // Begin TODO 3 HID_KEYBOARD_HANDS_ON: Change the descriptor report size ( here 187)
-#define HID_MOUSE_REPORT_DESC_SIZE    187
+#define HID_KEYBOARD_REPORT_DESC_SIZE    187
  // End HID_KEYBOARD_HANDS_ON: Change the descriptor report size ( here 187)
 
 #define HID_DESCRIPTOR_TYPE           0x21
 #define HID_REPORT_DESC               0x22
 
 #define HID_HS_BINTERVAL               0x07
-#define HID_FS_BINTERVAL               0x0A
 #define HID_POLLING_INTERVAL           0x0A
 
 #define HID_REQ_SET_PROTOCOL          0x0B
